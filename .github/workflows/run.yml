@@ -1,0 +1,30 @@
+name: Gold and Weather Bot
+
+on:
+  schedule:
+    - cron: '30 22 * * *'  # 每天早上 6:30 執行 (UTC+8)
+  workflow_dispatch:        # 允許手動觸發
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Run main script
+        env:
+          CWA_API_KEY: ${{ secrets.CWA_API_KEY }}
+          LINE_ACCESS_TOKEN: ${{ secrets.LINE_ACCESS_TOKEN }}
+          LINE_USER_ID: ${{ secrets.LINE_USER_ID }}
+        run: |
+          python main.py
