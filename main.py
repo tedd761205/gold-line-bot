@@ -7,7 +7,7 @@ import yfinance as yf
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
-# 1. 抓取黃金與匯率並計算價格
+# 1. 抓取黃金與匯率並計算價格 (更新版格式)
 def get_gold_prices():
   try:
     # 抓取黃金期貨與美元兌台幣匯率
@@ -20,21 +20,41 @@ def get_gold_prices():
     gold_usd = gold_futures["Close"].iloc[-1]
     usd_twd = twd_rate["Close"].iloc[-1]
 
-    # 計算國際黃金基礎價 (1盎司 = 31.1035克)
-    international_price = (gold_usd * usd_twd) / 31.1035
+    # 單位換算公式：
+    # 1 盎司 = 31.1034768 公克
+    # 1 台錢 = 3.75 公克
+    # 1 台兩 = 10 台錢 = 37.5 公克
+    price_per_gram = (gold_usd * usd_twd) / 31.1034768
+    price_per_mace = price_per_gram * 3.75
+    price_per_tael = price_per_mace * 10
 
-    # 飾金與金條計算邏輯
-    jewelry_sell = international_price + 256
-    jewelry_buy = international_price - 544
-    gold_bar = international_price + 500
+    # 銀樓實體參考價 (預估加減價邏輯)
+    # 賣出參考價 (+256元/克 換算回台錢約 +250/台錢)
+    silver_sell_mace = price_per_mace + 250
+    # 買入參考價 (-544元/克 換算回台錢約 -500/台錢)
+    silver_buy_mace = price_per_mace - 500
 
-    msg = (
-        "📊 【每日黃金行情報告】\n"
-        f"• 國際金價換算基底: {round(international_price, 2)} 元/克\n"
-        f"• 飾金賣出價: {round(jewelry_sell, 2)} 元\n"
-        f"• 飾金買進價: {round(jewelry_buy, 2)} 元\n"
-        f"• 黃金條塊參考價: {round(gold_bar, 2)} 元"
-    )
+    msg = f"""每日黃金價格自動回報 (Yahoo Finance 數據源)：
+
+【國際黃金與匯率】
+------------------------------------------
+‧ 國際金價： USD $ {gold_usd:,.1f} / 盎司
+‧ 美元匯率： 1 美元 = {usd_twd:.2f} 台幣
+
+【換算台幣價格 (約略值)】
+------------------------------------------
+‧ 每公克換算： NT$ {price_per_gram:,.1f} 元 / 公克
+‧ 每台錢換算： NT$ {int(round(price_per_mace)):,} 元 / 台錢
+‧ 每台兩換算： NT$ {int(round(price_per_tael)):,} 元 / 台兩
+
+【銀樓實體參考價 (預估)】
+------------------------------------------
+‧ 銀樓賣出參考價： NT$ {int(round(silver_sell_mace)):,} 元 / 台錢
+‧ 銀樓買入參考價： NT$ {int(round(silver_buy_mace)):,} 元 / 台錢
+
+※ 註：1 台兩 = 10 台錢 = 37.5 公克。銀樓實體價含加工與損耗折價。
+※ 資料來源：Yahoo Finance API (GC=F)"""
+
     return msg
   except Exception as e:
     return f"❌ 計算黃金價格發生錯誤: {str(e)}"
