@@ -17,6 +17,17 @@
       <button onclick="switchTab('all')" id="tabAll" class="flex-1 py-2.5 rounded-lg font-bold text-sm text-slate-600 transition">全部歷史</button>
     </div>
 
+    <!-- 日期篩選區塊 (僅在「全部歷史」時顯示) -->
+    <div id="filterSection" class="bg-white p-3 rounded-xl shadow-sm border border-slate-200 space-y-2 hidden">
+      <div class="text-xs font-bold text-slate-600">📅 篩選日期區間</div>
+      <div class="flex items-center gap-2">
+        <input type="date" id="startDate" onchange="renderData()" class="flex-1 p-2 border rounded-lg text-sm bg-slate-50">
+        <span class="text-slate-400">至</span>
+        <input type="date" id="endDate" onchange="renderData()" class="flex-1 p-2 border rounded-lg text-sm bg-slate-50">
+      </div>
+      <button onclick="clearFilter()" class="w-full py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-lg transition">清除篩選（顯示全部）</button>
+    </div>
+
     <!-- 載入中提示 -->
     <div id="loading" class="text-center py-10 text-slate-500">正在載入帳本資料...</div>
 
@@ -46,7 +57,7 @@
         .then(() => { fetchLedgerData(); })
         .catch(err => {
           console.error(err);
-          fetchLedgerData(); // 就算 LIFF 初始化失敗也嘗試抓資料
+          fetchLedgerData();
         });
     };
 
@@ -72,14 +83,23 @@
       currentTab = tab;
       const tabToday = document.getElementById('tabToday');
       const tabAll = document.getElementById('tabAll');
+      const filterSection = document.getElementById('filterSection');
 
       if (tab === 'today') {
         tabToday.className = "flex-1 py-2.5 rounded-lg font-bold text-sm bg-amber-500 text-white transition";
         tabAll.className = "flex-1 py-2.5 rounded-lg font-bold text-sm text-slate-600 transition";
+        filterSection.classList.add('hidden');
       } else {
         tabAll.className = "flex-1 py-2.5 rounded-lg font-bold text-sm bg-amber-500 text-white transition";
         tabToday.className = "flex-1 py-2.5 rounded-lg font-bold text-sm text-slate-600 transition";
+        filterSection.classList.remove('hidden');
       }
+      renderData();
+    }
+
+    function clearFilter() {
+      document.getElementById('startDate').value = '';
+      document.getElementById('endDate').value = '';
       renderData();
     }
 
@@ -88,12 +108,28 @@
       const summaryCard = document.getElementById('summaryCard');
       
       let filteredData = allData;
-      const todayStr = new Date().toLocaleDateString();
+      const todayStr = new Date().toDateString();
 
       if (currentTab === 'today') {
         filteredData = allData.filter(item => {
-          return new Date(item.timestamp).toLocaleDateString() === todayStr;
+          return new Date(item.timestamp).toDateString() === todayStr;
         });
+      } else {
+        // 全部歷史模式下，檢查是否有設定日期篩選
+        const startVal = document.getElementById('startDate').value;
+        const endVal = document.getElementById('endDate').value;
+
+        if (startVal) {
+          const startDate = new Date(startVal);
+          startDate.setHours(0, 0, 0, 0);
+          filteredData = filteredData.filter(item => new Date(item.timestamp) >= startDate);
+        }
+
+        if (endVal) {
+          const endDate = new Date(endVal);
+          endDate.setHours(23, 59, 59, 999);
+          filteredData = filteredData.filter(item => new Date(item.timestamp) <= endDate);
+        }
       }
 
       // 計算統計數據
@@ -116,7 +152,7 @@
 
       // 渲染統計摘要
       summaryCard.innerHTML = `
-        <div class="text-xs text-amber-800 font-bold mb-1">${currentTab === 'today' ? '📅 今日交易摘要' : '📊 全部歷史摘要'} (${filteredData.length} 筆)</div>
+        <div class="text-xs text-amber-800 font-bold mb-1">${currentTab === 'today' ? '📅 今日交易摘要' : '📊 篩選區間摘要'} (${filteredData.length} 筆)</div>
         <div class="grid grid-cols-2 gap-2 text-sm">
           <div class="bg-white p-2.5 rounded-lg border border-amber-100">
             <div class="text-slate-500 text-xs">零售賣出總額</div>
@@ -131,14 +167,14 @@
 
       // 渲染列表
       if (filteredData.length === 0) {
-        recordList.innerHTML = `<div class="text-center py-8 text-slate-400 bg-white rounded-xl border border-slate-200">目前沒有相關交易紀錄</div>`;
+        recordList.innerHTML = `<div class="text-center py-8 text-slate-400 bg-white rounded-xl border border-slate-200">目前沒有符合條件的交易紀錄</div>`;
         return;
       }
 
       let html = '';
       filteredData.forEach(item => {
         const dateObj = new Date(item.timestamp);
-        const timeStr = isNaN(dateObj) ? item.timestamp : `${dateObj.getMonth()+1}/${dateObj.getDate()} ${String(dateObj.getHours()).padStart(2,'0')}:${String(dateObj.getMinutes()).padStart(2,'0')}`;
+        const timeStr = isNaN(dateObj) ? item.timestamp : `${dateObj.getFullYear()}/${dateObj.getMonth()+1}/${dateObj.getDate()} ${String(dateObj.getHours()).padStart(2,'0')}:${String(dateObj.getMinutes()).padStart(2,'0')}`;
         const isSell = item.type.includes('賣出');
         const badgeColor = isSell ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800';
 
