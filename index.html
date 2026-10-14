@@ -1,124 +1,197 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>黃金快速記帳</title>
-    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>黃金買賣快速記帳</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
-<body class="bg-gray-900 text-gold p-4">
-    <div class="max-w-md mx-auto bg-gray-800 p-6 rounded-xl border border-yellow-600 shadow-2xl">
-        <h2 class="text-2xl font-bold text-center text-yellow-400 mb-4">💰 珠寶櫃台快速記帳</h2>
-        
-        <!-- 💡 顯示今日即時金價參考看板 -->
-        <div class="bg-gray-700 border border-yellow-500/60 p-3 rounded-lg mb-6 text-center">
-            <div class="text-xs text-yellow-300">今日牌價參考 (每錢)</div>
-            <div class="flex justify-around mt-1">
-                <span class="text-red-400 font-bold">🔴 賣出：$10,250</span>
-                <span class="text-green-400 font-bold">🟢 買入：$9,100</span>
-            </div>
+<body class="bg-slate-100 p-4 min-h-screen">
+  <div class="max-w-md mx-auto bg-white rounded-2xl shadow-lg p-6 space-y-5">
+    <h2 class="text-2xl font-bold text-center text-amber-600">黃金買賣快速記帳</h2>
+    
+    <form id="goldForm" class="space-y-4">
+      <!-- 交易類型 -->
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">交易類型</label>
+        <select id="type" onchange="toggleBuyOptions(); calculateTotal();" class="w-full p-3 border rounded-xl bg-slate-50 text-lg">
+          <option value="賣出 (零售)">賣出 (店家賣給顧客)</option>
+          <option value="買入 (回收)">買入 (店家回收舊金)</option>
+        </select>
+      </div>
+
+      <!-- 重量 -->
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1" id="weightLabel">重量 (錢)</label>
+        <input type="number" step="0.01" id="weight" placeholder="請輸入重量" oninput="calculateTotal()" required class="w-full p-3 border rounded-xl text-lg">
+      </div>
+
+      <!-- 回收扣重專用區塊 (預設隱藏，選擇回收時顯示) -->
+      <div id="recycleSection" class="hidden p-4 bg-amber-50/50 rounded-xl border border-amber-200 space-y-3">
+        <label class="block text-sm font-medium text-amber-900">回收計算方式</label>
+        <div class="flex gap-2">
+          <button type="button" onclick="setRatio(0.85)" id="btn085" class="flex-1 py-2 border rounded-lg bg-white text-sm font-bold border-amber-300 text-amber-700">× 0.85</button>
+          <button type="button" onclick="setRatio(0.90)" id="btn090" class="flex-1 py-2 border rounded-lg bg-white text-sm font-bold border-amber-300 text-amber-700">× 0.90</button>
+          <button type="button" onclick="setRatio(0.95)" id="btn095" class="flex-1 py-2 border rounded-lg bg-white text-sm font-bold border-amber-300 text-amber-700">× 0.95</button>
+          <button type="button" onclick="setRatio(1.0)" id="btn100" class="flex-1 py-2 border rounded-lg bg-white text-sm font-bold border-amber-300 text-amber-700">不扣重</button>
         </div>
-        
-        <form id="bookkeepingForm" class="space-y-4">
-            <div>
-                <label class="block text-sm font-medium text-gray-300 mb-1">交易類型</label>
-                <select id="type" class="w-full bg-gray-700 border border-yellow-600 rounded-lg p-3 text-white text-lg" onchange="updatePrice()">
-                    <option value="買入">🔴 買入（收購舊金 - 用$9,100算）</option>
-                    <option value="賣出">🟢 賣出（出售新品 - 用$10,250算）</option>
-                </select>
-            </div>
+        <div>
+          <label class="block-text-xs text-slate-500 mb-1">自訂扣重比例</label>
+          <input type="number" step="0.01" id="customRatio" value="0.95" oninput="calculateTotal()" class="w-full p-2 border rounded-lg text-base bg-white">
+        </div>
+      </div>
 
-            <div>
-                <label class="block text-sm font-medium text-gray-300 mb-1">品項名稱</label>
-                <input type="text" id="item" placeholder="例如：黃金項鍊" required class="w-full bg-gray-700 border border-yellow-600 rounded-lg p-3 text-white text-lg">
-            </div>
+      <!-- 今日金價 -->
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">每錢單價 (NT$)</label>
+        <input type="number" id="rate" placeholder="請輸入當日牌價" oninput="calculateTotal()" required class="w-full p-3 border rounded-xl text-lg">
+      </div>
 
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-300 mb-1">總重 (錢)</label>
-                    <input type="number" step="0.001" id="grossWeight" placeholder="1.200" required class="w-full bg-gray-700 border border-yellow-600 rounded-lg p-3 text-white text-lg" oninput="calculateAll()">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-300 mb-1">扣重 (耗損)</label>
-                    <input type="number" step="0.001" id="deductionWeight" placeholder="0.000" value="0" class="w-full bg-gray-700 border border-yellow-600 rounded-lg p-3 text-white text-lg" oninput="calculateAll()">
-                </div>
-            </div>
+      <!-- 工錢 -->
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">工錢 (NT$)</label>
+        <input type="number" id="laborFee" placeholder="請輸入工錢 (無則填0)" oninput="calculateTotal()" value="0" class="w-full p-3 border rounded-xl text-lg">
+      </div>
 
-            <div class="bg-gray-700 p-2 rounded-lg border border-yellow-500/30 text-sm flex justify-between px-4">
-                <span class="text-yellow-300">計算後淨重：</span>
-                <span id="netWeightDisplay" class="font-bold text-white">0 錢</span>
-            </div>
+      <!-- 總金額試算 -->
+      <div class="p-4 bg-amber-50 rounded-xl border border-amber-200">
+        <div class="text-sm text-amber-800" id="calcDesc">試算總金額：</div>
+        <div id="totalPriceDisplay" class="text-3xl font-extrabold text-amber-600">NT$ 0</div>
+      </div>
 
-            <div>
-                <label class="block text-sm font-medium text-gray-300 mb-1">黃金總金額 (元) <span class="text-xs text-yellow-400">（可手動修改）</span></label>
-                <input type="number" id="price" placeholder="自動計算" required class="w-full bg-gray-700 border border-yellow-600 rounded-lg p-3 text-white text-lg font-bold text-yellow-300">
-            </div>
+      <!-- 備註 -->
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">備註 / 客戶資料</label>
+        <input type="text" id="note" placeholder="可選填" class="w-full p-3 border rounded-xl text-lg">
+      </div>
 
-            <div>
-                <label class="block text-sm font-medium text-gray-300 mb-1">工錢 (元)</label>
-                <input type="number" id="labor" placeholder="0" value="0" class="w-full bg-gray-700 border border-yellow-600 rounded-lg p-3 text-white text-lg">
-            </div>
+      <!-- 提交按鈕 -->
+      <button type="button" onclick="submitData()" id="submitBtn" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 rounded-xl text-xl shadow-md transition">
+        送出記帳
+      </button>
+    </form>
+  </div>
 
-            <button type="submit" class="w-full bg-gradient-to-r from-yellow-600 to-yellow-500 text-gray-900 font-bold p-4 rounded-lg text-xl shadow-lg hover:from-yellow-500 hover:to-yellow-400 transition">
-                確認送出記帳
-            </button>
-        </form>
-    </div>
+  <script>
+    const LIFF_ID = "2012013654-D2jb0NgH"; // 您的 LIFF ID
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbw_LnJdtJ2kiH19AaNSnxQx3IxMKxgkR4VLx6I7VUqwfdXN67wNiiStykPlbnUSPAYK/exec"; // 您的 GAS 網址
+                    
+    window.onload = function() {
+      liff.init({ liffId: LIFF_ID }).catch(err => console.error(err));
+      toggleBuyOptions();
+    };
 
-    <script>
-        const RATE_SELL = 10250; // 賣出牌價 (顧客買)
-        const RATE_BUY = 9100;   // 買入牌價 (收購舊金)
+    function toggleBuyOptions() {
+      const type = document.getElementById('type').value;
+      const recycleSection = document.getElementById('recycleSection');
+      const weightLabel = document.getElementById('weightLabel');
+      
+      if (type.includes("買入")) {
+        recycleSection.classList.remove('hidden');
+        weightLabel.innerText = "毛重 (錢)";
+      } else {
+        recycleSection.classList.add('hidden');
+        weightLabel.innerText = "淨重 (錢)";
+      }
+    }
 
-        window.onload = function() {
-            liff.init({ liffId: "2012013654-D2jb0NgH" }).catch((err) => console.log(err));
-        };
+    function setRatio(val) {
+      document.getElementById('customRatio').value = val;
+      calculateTotal();
+    }
 
-        function calculateAll() {
-            const gross = parseFloat(document.getElementById('grossWeight').value) || 0;
-            const deduction = parseFloat(document.getElementById('deductionWeight').value) || 0;
-            const net = Math.max(0, gross - deduction);
-            
-            document.getElementById('netWeightDisplay').innerText = net.toFixed(3) + ' 錢';
+    function calculateTotal() {
+      const type = document.getElementById('type').value;
+      const rawWeight = parseFloat(document.getElementById('weight').value) || 0;
+      const rate = parseFloat(document.getElementById('rate').value) || 0;
+      const laborFee = parseFloat(document.getElementById('laborFee').value) || 0;
+      
+      let finalWeight = rawWeight;
+      let ratioText = "無扣重";
 
-            // 根據選的是買入或賣出，自動帶入牌價計算金價
-            const type = document.getElementById('type').value;
-            const unitRate = (type === '買入') ? RATE_BUY : RATE_SELL;
-            
-            const calculatedPrice = Math.round(net * unitRate);
-            document.getElementById('price').value = calculatedPrice;
-        }
+      if (type.includes("買入")) {
+        const ratio = parseFloat(document.getElementById('customRatio').value) || 1;
+        finalWeight = rawWeight * ratio;
+        ratioText = `扣重比 ${ratio} (淨重 ${finalWeight.toFixed(2)} 錢)`;
+      }
 
-        function updatePrice() {
-            calculateAll();
-        }
+      let total = 0;
+      if (type.includes("賣出")) {
+        total = (finalWeight * rate) + laborFee;
+        document.getElementById('calcDesc').innerText = `試算總金額 (淨重 ${finalWeight.toFixed(2)} 錢 + 工錢)：`;
+      } else {
+        total = (finalWeight * rate) - laborFee;
+        document.getElementById('calcDesc').innerText = `試算回收金額 (淨重 ${finalWeight.toFixed(2)} 錢 - 工錢)：`;
+      }
+      
+      document.getElementById('totalPriceDisplay').innerText = `NT$ ${Math.round(total).toLocaleString()}`;
+    }
 
-        document.getElementById('bookkeepingForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const gross = parseFloat(document.getElementById('grossWeight').value) || 0;
-            const deduction = parseFloat(document.getElementById('deductionWeight').value) || 0;
-            const net = Math.max(0, gross - deduction);
+    function submitData() {
+      const btn = document.getElementById('submitBtn');
+      const rawWeight = document.getElementById('weight').value;
+      const rate = document.getElementById('rate').value;
+      
+      if (!rawWeight || !rate) {
+        alert('請填寫重量與單價！');
+        return;
+      }
 
-            const formData = {
-                type: document.getElementById('type').value,
-                item: document.getElementById('item').value,
-                weight: net.toFixed(3) + '錢 (總:' + gross + '/扣:' + deduction + ')',
-                price: document.getElementById('price').value,
-                labor: document.getElementById('labor').value,
-                total: parseInt(document.getElementById('price').value) + parseInt(document.getElementById('labor').value || 0)
-            };
+      btn.disabled = true;
+      btn.innerText = '處理中...';
 
-            const GAS_URL = "https://script.google.com/macros/s/AKfycbw_LnJdtJ2kiH19AaNSnxQx3IxMKxgkR4VLx6I7VUqwfdXN67wNiiStykPlbnUSPAYK/exec";
-            
-            try {
-                await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(formData) });
-                alert('✅ 記帳成功已同步至試算表！');
-                if (liff.isInClient()) { liff.closeWindow(); }
-            } catch (error) {
-                alert('❌ 記帳失敗：' + error);
-            }
-        });
-    </script>
+      const type = document.getElementById('type').value;
+      const weightNum = parseFloat(rawWeight);
+      const rateNum = parseFloat(rate);
+      const laborNum = parseFloat(laborFee = document.getElementById('laborFee').value || 0);
+
+      let finalWeight = weightNum;
+      let ratioDesc = "無";
+
+      if (type.includes("買入")) {
+        const ratio = parseFloat(document.getElementById('customRatio').value) || 1;
+        finalWeight = weightNum * ratio;
+        ratioDesc = `毛重 ${weightNum} × 比例 ${ratio} = 淨重 ${finalWeight.toFixed(2)}`;
+      }
+
+      let totalPrice = 0;
+      if (type.includes("賣出")) {
+        totalPrice = Math.round((finalWeight * rateNum) + laborNum);
+      } else {
+        totalPrice = Math.round((finalWeight * rateNum) - laborNum);
+      }
+
+      const payload = {
+        type: type,
+        weight: weightNum,
+        ratioDesc: ratioDesc,
+        laborFee: laborNum,
+        price: totalPrice,
+        note: document.getElementById('note').value
+      };
+
+      fetch(GAS_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      .then(() => {
+        alert('記帳成功！');
+        document.getElementById('goldForm').reset();
+        toggleBuyOptions();
+        calculateTotal();
+        liff.closeWindow();
+      })
+      .catch(err => {
+        alert('發送失敗：' + err);
+      })
+      .finally(() => {
+        btn.disabled = false;
+        btn.innerText = '送出記帳';
+      });
+    }
+  </script>
 </body>
 </html>
