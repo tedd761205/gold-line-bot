@@ -1,12 +1,17 @@
 import os
 import re
 import requests
+import urllib3
+import yfinance as yf
 from flask import Flask, request, abort
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import (
     MessageEvent, TextMessage, TextSendMessage, QuickReply, QuickReplyButton, MessageAction
 )
+
+# 關閉 SSL 憑證警告
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 app = Flask(__name__)
 
@@ -33,20 +38,63 @@ def callback():
 
     return 'OK'
 
+# 輔助函式：透過 yfinance 自動抓取國際金價與匯率並換算
+def get_live_gold_prices():
+    try:
+        gold_futures = yf.Ticker("GC=F").history(period="1d")
+        twd_rate = yf.Ticker("TWD=X").history(period="1d")
+
+        if gold_futures.empty or twd_rate.empty:
+            return None
+
+        gold_usd = gold_futures["Close"].iloc[-1]
+        usd_twd = twd_rate["Close"].iloc[-1]
+
+        # 單位換算公式：1 盎司 = 31.1034768 公克，1 台錢 = 3.75 公克
+        price_per_gram = (gold_usd * usd_twd) / 31.1034768
+        price_per_mace = price_per_gram * 3.75
+
+        # 銀樓實體參考價 (預估加減價邏輯，可依店面習慣微調)
+        silver_sell_mace = price_per_mace + 250
+        silver_buy_mace = price_per_mace - 500
+
+        return {
+            "sell": int(round(silver_sell_mace)),
+            "buy": int(round(silver_buy_mace)),
+            "gold_usd": gold_usd,
+            "usd_twd": usd_twd
+        }
+    except Exception as e:
+        print(f"取得即時金價錯誤: {e}")
+        return None
+
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
     user_msg = event.message.text.strip()
     
-    # 1. 報價
+    # 1. 報價 (改為自動串接 yfinance 即時計算)
     if user_msg == "報價":
-        reply_text = (
-            "💰 【今日最新黃金牌價】\n"
-            "───────────────\n"
-            "🔴 賣出價（顧客買入）：$10,250 / 錢\n"
-            "🟢 買入價（顧客賣出）：$9,100 / 錢\n"
-            "───────────────\n"
-            "💡 提示：輸入「買入 項鍊 1錢 10250」即可記錄交易！"
-        )
+        prices = get_live_gold_prices()
+        if prices:
+            reply_text = (
+                "💰 【今日最新黃金牌價】(即時換算)\n"
+                "───────────────\n"
+                f"🔴 賣出價（顧客買入）：${prices['sell']:,} / 錢\n"
+                f"🟢 買入價（顧客賣出）：${prices['buy']:,} / 錢\n"
+                "───────────────\n"
+                f"📈 國際金價: USD ${prices['gold_usd']:,.1f} | 匯率: {prices['usd_twd']:.2f}\n"
+                "💡 提示：輸入「買入 項鍊 1錢 10250」即可記錄交易！"
+            )
+        else:
+            reply_text = (
+                "💰 【今日最新黃金牌價】\n"
+                "───────────────\n"
+                "🔴 賣出價（顧客買入）：$10,250 / 錢\n"
+                "🟢 買入價（顧客賣出）：$9,100 / 錢\n"
+                "───────────────\n"
+                "⚠️ 目前無法取得即時國際金價，已顯示預設參考價。\n"
+                "💡 提示：輸入「買入 項鍊 1錢 10250」即可記錄交易！"
+            )
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_text))
         return
 
