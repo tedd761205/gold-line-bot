@@ -187,10 +187,13 @@
         note: document.getElementById('note').value
       };
 
+      // 改用文字表單格式透過 no-cors 拋送，確保 GAS 能穩定接收
       fetch(GAS_URL, {
         method: 'POST',
         mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8',
+        },
         body: JSON.stringify(payload)
       })
       .then(() => {
@@ -202,8 +205,6 @@
       })
       .catch(err => {
         alert('發送失敗：' + err);
-      })
-      .finally(() => {
         btn.disabled = false;
         btn.innerText = '送出記帳';
       });
