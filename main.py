@@ -54,13 +54,21 @@ def get_live_gold_prices():
         price_per_gram = (gold_usd * usd_twd) / 31.1034768
         price_per_mace = price_per_gram * 3.75
 
-        # 銀樓實體參考價 (預估加減價邏輯，可依店面習慣微調)
+        # 銀樓實體參考價 (預估加減價邏輯)
         silver_sell_mace = price_per_mace + 250
         silver_buy_mace = price_per_mace - 500
 
+        # 銀樓每公克換算價
+        silver_sell_gram = silver_sell_mace / 3.75
+        silver_buy_gram = silver_buy_mace / 3.75
+
         return {
-            "sell": int(round(silver_sell_mace)),
-            "buy": int(round(silver_buy_mace)),
+            "sell_mace": int(round(silver_sell_mace)),
+            "sell_gram": int(round(silver_sell_gram)),
+            "buy_mace": int(round(silver_buy_mace)),
+            "buy_gram": int(round(silver_buy_gram)),
+            "intl_mace": int(round(price_per_mace)),
+            "intl_gram": int(round(price_per_gram)),
             "gold_usd": gold_usd,
             "usd_twd": usd_twd
         }
@@ -72,25 +80,30 @@ def get_live_gold_prices():
 def handle_message(event):
     user_msg = event.message.text.strip()
     
-    # 1. 報價 (改為自動串接 yfinance 即時計算)
+    # 1. 報價 (改為自動串接 yfinance 即時計算，並增加每錢與每公克對照)
     if user_msg == "報價":
         prices = get_live_gold_prices()
         if prices:
             reply_text = (
                 "💰 【今日最新黃金牌價】(即時換算)\n"
                 "───────────────\n"
-                f"🔴 賣出價（顧客買入）：${prices['sell']:,} / 錢\n"
-                f"🟢 買入價（顧客賣出）：${prices['buy']:,} / 錢\n"
+                f"📈 國際金價：USD ${prices['gold_usd']:,.1f} / 盎司\n"
+                f"   • 國際換算：${prices['intl_mace']:,} / 錢 ($ {prices['intl_gram']:,} / g)\n"
                 "───────────────\n"
-                f"📈 國際金價: USD ${prices['gold_usd']:,.1f} | 匯率: {prices['usd_twd']:.2f}\n"
+                f"🔴 賣出價（顧客買入）：\n"
+                f"   ${prices['sell_mace']:,} / 錢 (約 ${prices['sell_gram']:,} / g)\n"
+                f"🟢 買入價（顧客賣出）：\n"
+                f"   ${prices['buy_mace']:,} / 錢 (約 ${prices['buy_gram']:,} / g)\n"
+                "───────────────\n"
+                f"💱 匯率參考：1 美元 = {prices['usd_twd']:.2f} 台幣\n"
                 "💡 提示：輸入「買入 項鍊 1錢 10250」即可記錄交易！"
             )
         else:
             reply_text = (
                 "💰 【今日最新黃金牌價】\n"
                 "───────────────\n"
-                "🔴 賣出價（顧客買入）：$10,250 / 錢\n"
-                "🟢 買入價（顧客賣出）：$9,100 / 錢\n"
+                "🔴 賣出價（顧客買入）：$10,250 / 錢 (約 $2,733 / g)\n"
+                "🟢 買入價（顧客賣出）：$9,100 / 錢 (約 $2,427 / g)\n"
                 "───────────────\n"
                 "⚠️ 目前無法取得即時國際金價，已顯示預設參考價。\n"
                 "💡 提示：輸入「買入 項鍊 1錢 10250」即可記錄交易！"
