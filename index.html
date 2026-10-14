@@ -36,27 +36,33 @@
         </select>
       </div>
 
-      <!-- 今日金價 -->
+      <!-- 今日賣出金價 -->
       <div>
-        <label class="block text-sm font-medium text-slate-700 mb-1">每錢單價 / 當日牌價 (NT$)</label>
-        <input type="number" id="rate" placeholder="請輸入當日牌價" oninput="calculateTotal()" required class="w-full p-3 border rounded-xl text-lg">
+        <label class="block text-sm font-medium text-slate-700 mb-1" id="rateLabel">賣出牌價 (NT$/錢)</label>
+        <input type="number" id="rate" placeholder="請輸入當日賣出牌價" oninput="calculateTotal()" required class="w-full p-3 border rounded-xl text-lg">
       </div>
 
       <!-- 重量 -->
       <div>
-        <label class="block text-sm font-medium text-slate-700 mb-1" id="weightLabel">重量 (錢)</label>
+        <label class="block text-sm font-medium text-slate-700 mb-1" id="weightLabel">新金重量 (錢)</label>
         <input type="number" step="0.01" id="weight" placeholder="請輸入重量" oninput="calculateTotal()" required class="w-full p-3 border rounded-xl text-lg">
       </div>
 
-      <!-- 【賣出專用】舊金貼換扣重區塊 -->
+      <!-- 💡 【賣出專用】舊金貼換扣重區塊 -->
       <div id="tradeInvoicingSection" class="p-4 bg-amber-50/70 rounded-xl border border-amber-300 space-y-3">
-        <label class="block text-sm font-bold text-amber-900">✨ 舊金貼換設定 (是否有舊金折抵？)</label>
+        <label class="block text-sm font-bold text-amber-900">✨ 舊金貼換設定</label>
         <div class="flex items-center gap-2 mb-2">
           <input type="checkbox" id="hasTradeIn" onchange="toggleTradeInOptions()" class="w-5 h-5 accent-amber-600">
           <label for="hasTradeIn" class="text-sm font-bold text-slate-800 cursor-pointer">本次交易包含舊金貼換</label>
         </div>
 
+        <!-- 舊金規則細節 -->
         <div id="tradeInDetails" class="hidden space-y-3 pt-2 border-t border-amber-200">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">舊金毛重 (錢)</label>
+            <input type="number" step="0.01" id="oldWeight" placeholder="請輸入舊金重量" oninput="calculateTotal()" class="w-full p-2.5 border rounded-lg text-base bg-white">
+          </div>
+
           <div class="grid grid-cols-2 gap-2">
             <button type="button" onclick="setTradeInRatio(1.0)" class="py-2 border rounded-lg bg-white text-xs font-bold border-amber-400 text-amber-800 shadow-sm">🏛️ 本店舊金 (不扣重)</button>
             <button type="button" onclick="setTradeInRatio(0.95)" class="py-2 border rounded-lg bg-white text-xs font-bold border-amber-300 text-amber-700 shadow-sm">🔄 外店舊金 (需扣重)</button>
@@ -71,17 +77,23 @@
             <label class="block text-xs text-slate-600 mb-1">舊金折算比例</label>
             <input type="number" step="0.01" id="tradeInRatio" value="1.0" oninput="calculateTotal()" class="w-full p-2 border rounded-lg text-base bg-white">
           </div>
+
+          <!-- 💡 動態跳出：舊金較輕時才顯示「回收/買入金價」輸入框 -->
+          <div id="buyRateSection" class="hidden p-3 bg-amber-100/80 rounded-lg border border-amber-400 space-y-1">
+            <label class="block text-xs font-bold text-amber-900">⚠️ 舊金較輕（需按回收價折抵）：</label>
+            <label class="block text-xs text-slate-700">當日買入牌價 / 回收價 (NT$/錢)</label>
+            <input type="number" id="buyRate" placeholder="請輸入當日買入牌價" oninput="calculateTotal()" class="w-full p-2 border rounded-lg text-base bg-white">
+          </div>
         </div>
       </div>
 
-      <!-- 【買入專用】回收扣重區塊 (已補回 0.95, 0.90 等快捷按鈕) -->
+      <!-- 💡 【買入專用】回收扣重區塊 -->
       <div id="pureRecycleSection" class="hidden p-4 bg-amber-50/50 rounded-xl border border-amber-200 space-y-3">
         <label class="block text-sm font-medium text-amber-900">回收計算規則</label>
         <div class="grid grid-cols-2 gap-2">
           <button type="button" onclick="setPureRatio(1.0)" class="py-2 border rounded-lg bg-white text-xs font-bold border-amber-400 text-amber-800 shadow-sm">🏛️ 本店售出 (不扣重)</button>
           <button type="button" onclick="setPureRatio(0.95)" class="py-2 border rounded-lg bg-white text-xs font-bold border-amber-300 text-amber-700 shadow-sm">🔄 外店舊金 (需扣重)</button>
         </div>
-        <!-- 補回原本的快速折扣按鈕 -->
         <div class="flex gap-2 pt-1">
           <button type="button" onclick="setPureRatio(1.0)" class="flex-1 py-1.5 border rounded bg-white text-xs text-slate-600">不扣重 (1.0)</button>
           <button type="button" onclick="setPureRatio(0.95)" class="flex-1 py-1.5 border rounded bg-white text-xs text-slate-600">95折 (0.95)</button>
@@ -96,7 +108,7 @@
 
       <!-- 工錢 -->
       <div>
-        <label class="block text-sm font-medium text-slate-700 mb-1">工錢 (NT$)</label>
+        <label class="block text-sm font-medium text-slate-700 mb-1">新金工錢 (NT$)</label>
         <input type="number" id="laborFee" placeholder="請輸入工錢 (無則填0)" oninput="calculateTotal()" value="0" class="w-full p-3 border rounded-xl text-lg">
       </div>
 
@@ -133,16 +145,19 @@
       const tradeInSection = document.getElementById('tradeInvoicingSection');
       const pureRecycleSection = document.getElementById('pureRecycleSection');
       const weightLabel = document.getElementById('weightLabel');
+      const rateLabel = document.getElementById('rateLabel');
       
       if (type.includes("買入")) {
         tradeInSection.classList.add('hidden');
         pureRecycleSection.classList.remove('hidden');
         weightLabel.innerText = "回收毛重 (錢)";
+        rateLabel.innerText = "買入/回收牌價 (NT$/錢)";
         document.getElementById('pureRatio').value = "1.0";
       } else {
         tradeInSection.classList.remove('hidden');
         pureRecycleSection.classList.add('hidden');
         weightLabel.innerText = "新金重量 (錢)";
+        rateLabel.innerText = "賣出牌價 (NT$/錢)";
         document.getElementById('hasTradeIn').checked = false;
         document.getElementById('tradeInDetails').classList.add('hidden');
         document.getElementById('tradeInRatio').value = "1.0";
@@ -174,29 +189,51 @@
 
     function calculateTotal() {
       const type = document.getElementById('type').value;
-      const rawWeight = parseFloat(document.getElementById('weight').value) || 0;
-      const rate = parseFloat(document.getElementById('rate').value) || 0;
+      const newWeight = parseFloat(document.getElementById('weight').value) || 0;
+      const sellRate = parseFloat(document.getElementById('rate').value) || 0;
       const laborFee = parseFloat(document.getElementById('laborFee').value) || 0;
       
       let total = 0;
 
       if (type.includes("賣出")) {
-        let basePrice = rawWeight * rate + laborFee;
+        let basePrice = newWeight * sellRate + laborFee; // 新金總費用
         const hasTradeIn = document.getElementById('hasTradeIn').checked;
+
         if (hasTradeIn) {
+          const rawOldWeight = parseFloat(document.getElementById('oldWeight').value) || 0;
           const ratio = parseFloat(document.getElementById('tradeInRatio').value) || 1.0;
-          const tradeInDeduct = rawWeight * rate * ratio; 
-          total = basePrice - tradeInDeduct;
-          const sourceText = ratio === 1.0 ? "本店(不扣重)" : `外店(折算 ${ratio})`;
-          document.getElementById('calcDesc').innerText = `試算補貼差額 [舊金貼換: ${sourceText}]：`;
+          const finalOldWeight = rawOldWeight * ratio; // 舊金扣重後淨重
+          const buyRateSection = document.getElementById('buyRateSection');
+
+          // 比對重量：舊金淨重 vs 新金重量
+          if (finalOldWeight < newWeight) {
+            // 舊金較輕：跳出買入金價輸入框
+            buyRateSection.classList.remove('hidden');
+            const buyRate = parseFloat(document.getElementById('buyRate').value) || 0;
+            
+            // 舊金以買入價折抵，扣掉工錢
+            const oldGoldDeduct = finalOldWeight * buyRate;
+            total = basePrice - oldGoldDeduct;
+
+            document.getElementById('calcDesc').innerText = `舊金較輕 (折抵舊金價 $${buyRate}/錢)：`;
+          } else {
+            // 舊金較重或相等：不用跳出買入價，直接以賣出價換算折抵 + 新金工錢
+            buyRateSection.classList.add('hidden');
+            const oldGoldDeduct = finalOldWeight * sellRate;
+            total = basePrice - oldGoldDeduct;
+
+            document.getElementById('calcDesc').innerText = `舊金較重/等重 (以賣出價比重計價)：`;
+          }
         } else {
+          document.getElementById('buyRateSection').classList.add('hidden');
           total = basePrice;
-          document.getElementById('calcDesc').innerText = `試算總金額 (重量 ${rawWeight} 錢 + 工錢)：`;
+          document.getElementById('calcDesc').innerText = `試算總金額 (新金 ${newWeight} 錢 + 工錢)：`;
         }
       } else {
+        // 單純買入回收模式
         const ratio = parseFloat(document.getElementById('pureRatio').value) || 1.0;
-        const finalWeight = rawWeight * ratio;
-        total = (finalWeight * rate) - laborFee;
+        const finalWeight = newWeight * ratio;
+        total = (finalWeight * sellRate) - laborFee;
         const sourceText = ratio === 1.0 ? "本店(不扣重)" : `外店(折算 ${ratio})`;
         document.getElementById('calcDesc').innerText = `試算回收金額 [${sourceText}] (淨重 ${finalWeight.toFixed(2)} 錢)：`;
       }
@@ -229,11 +266,20 @@
       if (type.includes("賣出")) {
         let basePrice = weightNum * rateNum + laborNum;
         const hasTradeIn = document.getElementById('hasTradeIn').checked;
+
         if (hasTradeIn) {
+          const rawOldWeight = parseFloat(document.getElementById('oldWeight').value) || 0;
           const ratio = parseFloat(document.getElementById('tradeInRatio').value) || 1.0;
-          const sourceLabel = ratio === 1.0 ? "本店舊金(不扣重)" : "外店舊金(扣重)";
-          ratioDesc = `【舊金貼換】${sourceLabel} | 折算比例 ${ratio}`;
-          totalPrice = Math.round(basePrice - (weightNum * rateNum * ratio));
+          const finalOldWeight = rawOldWeight * ratio;
+          const buyRateNum = parseFloat(document.getElementById('buyRate').value || 0);
+
+          if (finalOldWeight < weightNum) {
+            ratioDesc = `【舊金較輕貼換】舊金重${rawOldWeight}錢(折算${finalOldWeight.toFixed(2)}) | 回收單價$${buyRateNum}`;
+            totalPrice = Math.round(basePrice - (finalOldWeight * buyRateNum));
+          } else {
+            ratioDesc = `【舊金較重貼換】舊金重${rawOldWeight}錢(折算${finalOldWeight.toFixed(2)}) | 以賣出價計算比重`;
+            totalPrice = Math.round(basePrice - (finalOldWeight * rateNum));
+          }
         } else {
           ratioDesc = "無舊金貼換";
           totalPrice = Math.round(basePrice);
