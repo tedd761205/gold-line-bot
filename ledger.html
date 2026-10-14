@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>黃金交易個人帳本</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+</head>
+<body class="bg-slate-100 p-4 min-h-screen pb-10">
+  <div class="max-w-md mx-auto space-y-4">
+    <h2 class="text-2xl font-bold text-center text-amber-600 pt-2">黃金交易個人帳本</h2>
+    
+    <!-- 標籤切換按鈕 (Tabs) -->
+    <div class="flex bg-white rounded-xl p-1 shadow-sm border border-slate-200">
+      <button onclick="switchTab('today')" id="tabToday" class="flex-1 py-2.5 rounded-lg font-bold text-sm bg-amber-500 text-white transition">今日明細</button>
+      <button onclick="switchTab('all')" id="tabAll" class="flex-1 py-2.5 rounded-lg font-bold text-sm text-slate-600 transition">全部歷史</button>
+    </div>
+
+    <!-- 載入中提示 -->
+    <div id="loading" class="text-center py-10 text-slate-500">正在載入帳本資料...</div>
+
+    <!-- 資料清單容器 -->
+    <div id="contentContainer" class="space-y-3 hidden">
+      <!-- 統計摘要區塊 -->
+      <div id="summaryCard" class="bg-amber-50 border border-amber-200 p-4 rounded-xl shadow-sm">
+        <!-- 動態填入統計數據 -->
+      </div>
+
+      <!-- 交易紀錄列表 -->
+      <div id="recordList" class="space-y-3">
+        <!-- 動態填入列表 -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const LIFF_ID = "2012013654-D2jb0NgH"; // 請對應你的 LIFF ID
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbw_LnJdtJ2kiH19AaNSnxQx3IxMKxgkR4VLx6I7VUqwfdXN67wNiiStykPlbnUSPAYK/exec"; // 請確認為你的 GAS 網址
+
+    let allData = [];
+    let currentTab = 'today';
+
+    window.onload = function() {
+      liff.init({ liffId: LIFF_ID })
+        .then(() => { fetchLedgerData(); })
+        .catch(err => {
+          console.error(err);
+          fetchLedgerData(); // 就算 LIFF 初始化失敗也嘗試抓資料
+        });
+    };
+
+    function fetchLedgerData() {
+      fetch(GAS_URL)
+        .then(res => res.json())
+        .then(result => {
+          if (result.status === 'success') {
+            allData = result.data.reverse(); // 最新筆數排在最前面
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('contentContainer').classList.remove('hidden');
+            renderData();
+          } else {
+            document.getElementById('loading').innerText = '載入失敗：' + result.message;
+          }
+        })
+        .catch(err => {
+          document.getElementById('loading').innerText = '網路連線錯誤：' + err;
+        });
+    }
+
+    function switchTab(tab) {
+      currentTab = tab;
+      const tabToday = document.getElementById('tabToday');
+      const tabAll = document.getElementById('tabAll');
+
+      if (tab === 'today') {
+        tabToday.className = "flex-1 py-2.5 rounded-lg font-bold text-sm bg-amber-500 text-white transition";
+        tabAll.className = "flex-1 py-2.5 rounded-lg font-bold text-sm text-slate-600 transition";
+      } else {
+        tabAll.className = "flex-1 py-2.5 rounded-lg font-bold text-sm bg-amber-500 text-white transition";
+        tabToday.className = "flex-1 py-2.5 rounded-lg font-bold text-sm text-slate-600 transition";
+      }
+      renderData();
+    }
+
+    function renderData() {
+      const recordList = document.getElementById('recordList');
+      const summaryCard = document.getElementById('summaryCard');
+      
+      let filteredData = allData;
+      const todayStr = new Date().toLocaleDateString();
+
+      if (currentTab === 'today') {
+        filteredData = allData.filter(item => {
+          return new Date(item.timestamp).toLocaleDateString() === todayStr;
+        });
+      }
+
+      // 計算統計數據
+      let totalSellAmount = 0;
+      let totalBuyAmount = 0;
+      let totalSellWeight = 0;
+      let totalBuyWeight = 0;
+
+      filteredData.forEach(item => {
+        const price = parseFloat(item.price) || 0;
+        const weight = parseFloat(item.weight) || 0;
+        if (item.type.includes('賣出')) {
+          totalSellAmount += price;
+          totalSellWeight += weight;
+        } else {
+          totalBuyAmount += price;
+          totalBuyWeight += weight;
+        }
+      });
+
+      // 渲染統計摘要
+      summaryCard.innerHTML = `
+        <div class="text-xs text-amber-800 font-bold mb-1">${currentTab === 'today' ? '📅 今日交易摘要' : '📊 全部歷史摘要'} (${filteredData.length} 筆)</div>
+        <div class="grid grid-cols-2 gap-2 text-sm">
+          <div class="bg-white p-2.5 rounded-lg border border-amber-100">
+            <div class="text-slate-500 text-xs">零售賣出總額</div>
+            <div class="font-extrabold text-amber-600">NT$ ${Math.round(totalSellAmount).toLocaleString()}</div>
+          </div>
+          <div class="bg-white p-2.5 rounded-lg border border-amber-100">
+            <div class="text-slate-500 text-xs">回收買入總額</div>
+            <div class="font-extrabold text-blue-600">NT$ ${Math.round(totalBuyAmount).toLocaleString()}</div>
+          </div>
+        </div>
+      `;
+
+      // 渲染列表
+      if (filteredData.length === 0) {
+        recordList.innerHTML = `<div class="text-center py-8 text-slate-400 bg-white rounded-xl border border-slate-200">目前沒有相關交易紀錄</div>`;
+        return;
+      }
+
+      let html = '';
+      filteredData.forEach(item => {
+        const dateObj = new Date(item.timestamp);
+        const timeStr = isNaN(dateObj) ? item.timestamp : `${dateObj.getMonth()+1}/${dateObj.getDate()} ${String(dateObj.getHours()).padStart(2,'0')}:${String(dateObj.getMinutes()).padStart(2,'0')}`;
+        const isSell = item.type.includes('賣出');
+        const badgeColor = isSell ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800';
+
+        html += `
+          <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 space-y-2">
+            <div class="flex justify-between items-center">
+              <span class="px-2.5 py-1 rounded-md text-xs font-bold ${badgeColor}">${item.type}</span>
+              <span class="text-xs text-slate-400">${timeStr}</span>
+            </div>
+            <div class="flex justify-between items-end">
+              <div>
+                <div class="font-bold text-slate-800 text-lg">${item.category} <span class="text-sm font-normal text-slate-600">(${item.weight} 錢)</span></div>
+                <div class="text-xs text-slate-500">牌價: $${item.rate} | 工錢: $${item.laborFee}</div>
+                ${item.note ? `<div class="text-xs text-slate-400 mt-1">備註: ${item.note}</div>` : ''}
+              </div>
+              <div class="text-right">
+                <div class="text-xs text-slate-400">總金額</div>
+                <div class="text-xl font-extrabold ${isSell ? 'text-amber-600' : 'text-blue-600'}">NT$ ${Math.round(item.price).toLocaleString()}</div>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+
+      recordList.innerHTML = html;
+    }
+  </script>
+</body>
+</html>
