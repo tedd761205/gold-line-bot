@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>黃金快速記帳</title>
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-gold p-4">
+    <div class="max-w-md mx-auto bg-gray-800 p-6 rounded-xl border border-yellow-600 shadow-2xl">
+        <h2 class="text-2xl font-bold text-center text-yellow-400 mb-4">💰 珠寶櫃台快速記帳</h2>
+        
+        <!-- 💡 顯示今日即時金價參考看板 -->
+        <div class="bg-gray-700 border border-yellow-500/60 p-3 rounded-lg mb-6 text-center">
+            <div class="text-xs text-yellow-300">今日牌價參考 (每錢)</div>
+            <div class="flex justify-around mt-1">
+                <span class="text-red-400 font-bold">🔴 賣出：$10,250</span>
+                <span class="text-green-400 font-bold">🟢 買入：$9,100</span>
+            </div>
+        </div>
+        
+        <form id="bookkeepingForm" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-1">交易類型</label>
+                <select id="type" class="w-full bg-gray-700 border border-yellow-600 rounded-lg p-3 text-white text-lg" onchange="updatePrice()">
+                    <option value="買入">🔴 買入（收購舊金 - 用$9,100算）</option>
+                    <option value="賣出">🟢 賣出（出售新品 - 用$10,250算）</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-1">品項名稱</label>
+                <input type="text" id="item" placeholder="例如：黃金項鍊" required class="w-full bg-gray-700 border border-yellow-600 rounded-lg p-3 text-white text-lg">
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">總重 (錢)</label>
+                    <input type="number" step="0.001" id="grossWeight" placeholder="1.200" required class="w-full bg-gray-700 border border-yellow-600 rounded-lg p-3 text-white text-lg" oninput="calculateAll()">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">扣重 (耗損)</label>
+                    <input type="number" step="0.001" id="deductionWeight" placeholder="0.000" value="0" class="w-full bg-gray-700 border border-yellow-600 rounded-lg p-3 text-white text-lg" oninput="calculateAll()">
+                </div>
+            </div>
+
+            <div class="bg-gray-700 p-2 rounded-lg border border-yellow-500/30 text-sm flex justify-between px-4">
+                <span class="text-yellow-300">計算後淨重：</span>
+                <span id="netWeightDisplay" class="font-bold text-white">0 錢</span>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-1">黃金總金額 (元) <span class="text-xs text-yellow-400">（可手動修改）</span></label>
+                <input type="number" id="price" placeholder="自動計算" required class="w-full bg-gray-700 border border-yellow-600 rounded-lg p-3 text-white text-lg font-bold text-yellow-300">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-1">工錢 (元)</label>
+                <input type="number" id="labor" placeholder="0" value="0" class="w-full bg-gray-700 border border-yellow-600 rounded-lg p-3 text-white text-lg">
+            </div>
+
+            <button type="submit" class="w-full bg-gradient-to-r from-yellow-600 to-yellow-500 text-gray-900 font-bold p-4 rounded-lg text-xl shadow-lg hover:from-yellow-500 hover:to-yellow-400 transition">
+                確認送出記帳
+            </button>
+        </form>
+    </div>
+
+    <script>
+        const RATE_SELL = 10250; // 賣出牌價 (顧客買)
+        const RATE_BUY = 9100;   // 買入牌價 (收購舊金)
+
+        window.onload = function() {
+            liff.init({ liffId: "你的LIFF-ID" }).catch((err) => console.log(err));
+        };
+
+        function calculateAll() {
+            const gross = parseFloat(document.getElementById('grossWeight').value) || 0;
+            const deduction = parseFloat(document.getElementById('deductionWeight').value) || 0;
+            const net = Math.max(0, gross - deduction);
+            
+            document.getElementById('netWeightDisplay').innerText = net.toFixed(3) + ' 錢';
+
+            // 根據選的是買入或賣出，自動帶入牌價計算金價
+            const type = document.getElementById('type').value;
+            const unitRate = (type === '買入') ? RATE_BUY : RATE_SELL;
+            
+            const calculatedPrice = Math.round(net * unitRate);
+            document.getElementById('price').value = calculatedPrice;
+        }
+
+        function updatePrice() {
+            calculateAll();
+        }
+
+        document.getElementById('bookkeepingForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const gross = parseFloat(document.getElementById('grossWeight').value) || 0;
+            const deduction = parseFloat(document.getElementById('deductionWeight').value) || 0;
+            const net = Math.max(0, gross - deduction);
+
+            const formData = {
+                type: document.getElementById('type').value,
+                item: document.getElementById('item').value,
+                weight: net.toFixed(3) + '錢 (總:' + gross + '/扣:' + deduction + ')',
+                price: document.getElementById('price').value,
+                labor: document.getElementById('labor').value,
+                total: parseInt(document.getElementById('price').value) + parseInt(document.getElementById('labor').value || 0)
+            };
+
+            const GAS_URL = "你的GAS_WEB_APP_URL";
+            
+            try {
+                await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(formData) });
+                alert('✅ 記帳成功已同步至試算表！');
+                if (liff.isInClient()) { liff.closeWindow(); }
+            } catch (error) {
+                alert('❌ 記帳失敗：' + error);
+            }
+        });
+    </script>
+</body>
+</html>
