@@ -48,18 +48,22 @@
         <input type="number" step="0.01" id="weight" placeholder="請輸入重量" oninput="calculateTotal()" required class="w-full p-3 border rounded-xl text-lg">
       </div>
 
-      <!-- 回收扣重專用區塊 (預設隱藏) -->
+      <!-- 回收扣重專用區塊 (買入回收時顯示) -->
       <div id="recycleSection" class="hidden p-4 bg-amber-50/50 rounded-xl border border-amber-200 space-y-3">
-        <label class="block text-sm font-medium text-amber-900">回收計算方式</label>
-        <div class="flex gap-2">
-          <button type="button" onclick="setRatio(0.85)" id="btn085" class="flex-1 py-2 border rounded-lg bg-white text-sm font-bold border-amber-300 text-amber-700">× 0.85</button>
-          <button type="button" onclick="setRatio(0.90)" id="btn090" class="flex-1 py-2 border rounded-lg bg-white text-sm font-bold border-amber-300 text-amber-700">× 0.90</button>
-          <button type="button" onclick="setRatio(0.95)" id="btn095" class="flex-1 py-2 border rounded-lg bg-white text-sm font-bold border-amber-300 text-amber-700">× 0.95</button>
-          <button type="button" onclick="setRatio(1.0)" id="btn100" class="flex-1 py-2 border rounded-lg bg-white text-sm font-bold border-amber-300 text-amber-700">不扣重</button>
+        <label class="block text-sm font-medium text-amber-900">舊金來源與計算規則</label>
+        <div class="grid grid-cols-2 gap-2">
+          <button type="button" onclick="setRatio(1.0)" id="btnLocal" class="py-2.5 border rounded-lg bg-white text-sm font-bold border-amber-400 text-amber-800 shadow-sm">🏛️ 本店售出 (不扣重)</button>
+          <button type="button" onclick="setRatio(0.95)" id="btnExternal" class="py-2.5 border rounded-lg bg-white text-sm font-bold border-amber-300 text-amber-700 shadow-sm">🔄 外店舊金 (需扣重)</button>
+        </div>
+        <div class="flex gap-2 pt-1">
+          <button type="button" onclick="setRatio(1.0)" class="flex-1 py-1.5 border rounded bg-white text-xs text-slate-600">不扣重 (1.0)</button>
+          <button type="button" onclick="setRatio(0.95)" class="flex-1 py-1.5 border rounded bg-white text-xs text-slate-600">95折 (0.95)</button>
+          <button type="button" onclick="setRatio(0.90)" class="flex-1 py-1.5 border rounded bg-white text-xs text-slate-600">90折 (0.90)</button>
+          <button type="button" onclick="setRatio(0.85)" class="flex-1 py-1.5 border rounded bg-white text-xs text-slate-600">85折 (0.85)</button>
         </div>
         <div>
-          <label class="block text-xs text-slate-500 mb-1">自訂扣重比例</label>
-          <input type="number" step="0.01" id="customRatio" value="0.95" oninput="calculateTotal()" class="w-full p-2 border rounded-lg text-base bg-white">
+          <label class="block text-xs text-slate-500 mb-1">自訂折算比例 (例如 0.95)</label>
+          <input type="number" step="0.01" id="customRatio" value="1.0" oninput="calculateTotal()" class="w-full p-2 border rounded-lg text-base bg-white">
         </div>
       </div>
 
@@ -104,7 +108,10 @@
       
       if (type.includes("買入")) {
         recycleSection.classList.remove('hidden');
-        weightLabel.innerText = "毛重 (錢)";
+        weightLabel.innerText = "回收毛重 (錢)";
+        // 預設切換為買入時，預設為本店不扣重 (1.0)
+        document.getElementById('customRatio').value = "1.0";
+        calculateTotal();
       } else {
         recycleSection.classList.add('hidden');
         weightLabel.innerText = "淨重 (錢)";
@@ -135,7 +142,9 @@
         document.getElementById('calcDesc').innerText = `試算總金額 (淨重 ${finalWeight.toFixed(2)} 錢 + 工錢)：`;
       } else {
         total = (finalWeight * rate) - laborFee;
-        document.getElementById('calcDesc').innerText = `試算回收金額 (淨重 ${finalWeight.toFixed(2)} 錢 - 工錢)：`;
+        const ratioCheck = parseFloat(document.getElementById('customRatio').value);
+        const sourceText = ratioCheck === 1.0 ? "本店(不扣重)" : `外店(折算 ${ratioCheck})`;
+        document.getElementById('calcDesc').innerText = `試算回收金額 [${sourceText}] (計算淨重 ${finalWeight.toFixed(2)} 錢)：`;
       }
       
       document.getElementById('totalPriceDisplay').innerText = `NT$ ${Math.round(total).toLocaleString()}`;
@@ -166,7 +175,8 @@
       if (type.includes("買入")) {
         const ratio = parseFloat(document.getElementById('customRatio').value) || 1;
         finalWeight = weightNum * ratio;
-        ratioDesc = `毛重 ${weightNum} × 比例 ${ratio} = 淨重 ${finalWeight.toFixed(2)}`;
+        const sourceLabel = ratio === 1.0 ? "本店(不扣重)" : "外店(扣重)";
+        ratioDesc = `${sourceLabel} | 毛重 ${weightNum} × 比例 ${ratio} = 淨重 ${finalWeight.toFixed(2)}`;
       }
 
       let totalPrice = 0;
@@ -187,7 +197,6 @@
         note: document.getElementById('note').value
       };
 
-      // 改用文字表單格式透過 no-cors 拋送，確保 GAS 能穩定接收
       fetch(GAS_URL, {
         method: 'POST',
         mode: 'no-cors',
