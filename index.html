@@ -2,19 +2,21 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- 修正平板與手機的視口縮放 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>黃金買賣快速記帳</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
-<body class="bg-slate-100 p-4 min-h-screen">
-  <div class="max-w-md mx-auto bg-white rounded-2xl shadow-lg p-6 space-y-5">
-    <h2 class="text-2xl font-bold text-center text-amber-600">黃金買賣快速記帳</h2>
+<body class="bg-slate-100 p-3 sm:p-6 min-h-screen">
+  <!-- 將 max-w-md 改為 max-w-xl，讓平板上有更好的寬度延伸 -->
+  <div class="w-full max-w-xl mx-auto bg-white rounded-2xl shadow-lg p-5 sm:p-8 space-y-6">
+    <h2 class="text-2xl sm:text-3xl font-bold text-center text-amber-600">黃金買賣快速記帳</h2>
     
     <form id="goldForm" class="space-y-4">
       <!-- 交易類型 -->
       <div>
-        <label class="block text-sm font-medium text-slate-700 mb-1">交易類型</label>
+        <label class="block text-sm sm:text-base font-medium text-slate-700 mb-1">交易類型</label>
         <select id="type" onchange="toggleFormMode(); calculateTotal();" class="w-full p-3 border rounded-xl bg-slate-50 text-lg">
           <option value="賣出 (零售)">賣出 (店家賣給顧客)</option>
           <option value="買入 (回收)">買入 (店家回收舊金)</option>
@@ -23,7 +25,7 @@
 
       <!-- 飾品品項 -->
       <div>
-        <label class="block text-sm font-medium text-slate-700 mb-1">飾品品項</label>
+        <label class="block text-sm sm:text-base font-medium text-slate-700 mb-1">飾品品項</label>
         <select id="category" class="w-full p-3 border rounded-xl bg-slate-50 text-lg">
           <option value="項鍊" selected>項鍊</option>
           <option value="戒指">戒指</option>
@@ -39,18 +41,18 @@
       <!-- 今日牌價 (賣出與買入) -->
       <div class="grid grid-cols-2 gap-3">
         <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">當日牌價(賣出) (NT$)</label>
+          <label class="block text-xs sm:text-sm font-bold text-slate-700 mb-1">當日牌價(賣出) (NT$)</label>
           <input type="number" id="rate" placeholder="賣出價" oninput="calculateTotal()" required class="w-full p-3 border rounded-xl text-lg">
         </div>
         <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">當日牌價(買入) (NT$)</label>
+          <label class="block text-xs sm:text-sm font-bold text-slate-700 mb-1">當日牌價(買入) (NT$)</label>
           <input type="number" id="buyRate" placeholder="買入/回收價" oninput="calculateTotal()" class="w-full p-3 border rounded-xl text-lg">
         </div>
       </div>
 
       <!-- 新金重量 -->
       <div>
-        <label class="block text-sm font-medium text-slate-700 mb-1" id="weightLabel">新金重量 (錢)</label>
+        <label class="block text-sm sm:text-base font-medium text-slate-700 mb-1" id="weightLabel">新金重量 (錢)</label>
         <input type="number" step="0.01" id="weight" placeholder="請輸入重量" oninput="calculateTotal()" required class="w-full p-3 border rounded-xl text-lg">
       </div>
 
@@ -58,81 +60,81 @@
       <div id="tradeInvoicingSection" class="p-4 bg-amber-50/70 rounded-xl border border-amber-300 space-y-3">
         <div class="flex items-center gap-2">
           <input type="checkbox" id="hasTradeIn" onchange="toggleTradeInOptions()" class="w-5 h-5 accent-amber-600">
-          <label for="hasTradeIn" class="text-sm font-bold text-slate-800 cursor-pointer">本次交易包含舊金貼換</label>
+          <label for="hasTradeIn" class="text-sm sm:text-base font-bold text-slate-800 cursor-pointer">本次交易包含舊金貼換</label>
         </div>
 
         <div id="tradeInDetails" class="hidden space-y-3 pt-2 border-t border-amber-200">
           <!-- 舊金來源選擇 -->
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">舊金來源</label>
+            <label class="block text-xs sm:text-sm font-bold text-slate-700 mb-1">舊金來源</label>
             <div class="grid grid-cols-2 gap-2">
-              <button type="button" onclick="setShopType('local')" id="btnShopLocal" class="py-2 border rounded-lg bg-amber-500 text-white text-xs font-bold shadow-sm">🏛️ 本店舊金 (不扣重)</button>
-              <button type="button" onclick="setShopType('external')" id="btnShopExternal" class="py-2 border rounded-lg bg-white text-xs font-bold border-amber-300 text-amber-700 shadow-sm">🔄 外店舊金 (需扣重)</button>
+              <button type="button" onclick="setShopType('local')" id="btnShopLocal" class="py-2.5 border rounded-lg bg-amber-500 text-white text-xs sm:text-sm font-bold shadow-sm">🏛️ 本店舊金 (不扣重)</button>
+              <button type="button" onclick="setShopType('external')" id="btnShopExternal" class="py-2.5 border rounded-lg bg-white text-xs sm:text-sm font-bold border-amber-300 text-amber-700 shadow-sm">🔄 外店舊金 (需扣重)</button>
             </div>
           </div>
 
           <!-- 舊金重量輸入 -->
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">舊金毛重 (錢)</label>
-            <input type="number" step="0.01" id="oldWeight" placeholder="請輸入舊金重量" oninput="calculateTotal()" class="w-full p-2.5 border rounded-lg text-base bg-white">
+            <label class="block text-xs sm:text-sm font-bold text-slate-700 mb-1">舊金毛重 (錢)</label>
+            <input type="number" step="0.01" id="oldWeight" placeholder="請輸入舊金重量" oninput="calculateTotal()" class="w-full p-3 border rounded-lg text-base bg-white">
           </div>
 
           <!-- 外店扣重比例區塊 (選外店時顯示) -->
           <div id="externalRatioBox" class="hidden">
-            <label class="block text-xs text-slate-600 mb-1">外店扣重折算比例</label>
-            <div class="flex gap-2 mb-1">
-              <button type="button" onclick="setTradeInRatio(0.95)" class="flex-1 py-1 border rounded bg-white text-xs text-slate-600">95折(0.95)</button>
-              <button type="button" onclick="setTradeInRatio(0.90)" class="flex-1 py-1 border rounded bg-white text-xs text-slate-600">90折(0.90)</button>
-              <button type="button" onclick="setTradeInRatio(0.85)" class="flex-1 py-1 border rounded bg-white text-xs text-slate-600">85折(0.85)</button>
+            <label class="block text-xs sm:text-sm text-slate-600 mb-1">外店扣重折算比例</label>
+            <div class="flex gap-2 mb-2">
+              <button type="button" onclick="setTradeInRatio(0.95)" class="flex-1 py-1.5 border rounded bg-white text-xs sm:text-sm text-slate-600">95折(0.95)</button>
+              <button type="button" onclick="setTradeInRatio(0.90)" class="flex-1 py-1.5 border rounded bg-white text-xs sm:text-sm text-slate-600">90折(0.90)</button>
+              <button type="button" onclick="setTradeInRatio(0.85)" class="flex-1 py-1.5 border rounded bg-white text-xs sm:text-sm text-slate-600">85折(0.85)</button>
             </div>
-            <input type="number" step="0.01" id="tradeInRatio" value="0.95" oninput="calculateTotal()" class="w-full p-2 border rounded-lg text-base bg-white">
+            <input type="number" step="0.01" id="tradeInRatio" value="0.95" oninput="calculateTotal()" class="w-full p-3 border rounded-lg text-base bg-white">
           </div>
         </div>
       </div>
 
       <!-- 💡 【買入專用】單純回收區塊 -->
       <div id="pureRecycleSection" class="hidden p-4 bg-amber-50/50 rounded-xl border border-amber-200 space-y-3">
-        <label class="block text-sm font-medium text-amber-900">回收計算規則</label>
+        <label class="block text-sm sm:text-base font-medium text-amber-900">回收計算規則</label>
         <div class="grid grid-cols-2 gap-2">
-          <button type="button" onclick="setPureRatio(1.0)" class="py-2 border rounded-lg bg-white text-xs font-bold border-amber-400 text-amber-800 shadow-sm">🏛️ 本店售出 (不扣重)</button>
-          <button type="button" onclick="setPureRatio(0.95)" class="py-2 border rounded-lg bg-white text-xs font-bold border-amber-300 text-amber-700 shadow-sm">🔄 外店舊金 (需扣重)</button>
+          <button type="button" onclick="setPureRatio(1.0)" class="py-2.5 border rounded-lg bg-white text-xs sm:text-sm font-bold border-amber-400 text-amber-800 shadow-sm">🏛️ 本店售出 (不扣重)</button>
+          <button type="button" onclick="setPureRatio(0.95)" class="py-2.5 border rounded-lg bg-white text-xs sm:text-sm font-bold border-amber-300 text-amber-700 shadow-sm">🔄 外店舊金 (需扣重)</button>
         </div>
         <div class="flex gap-2 pt-1">
-          <button type="button" onclick="setPureRatio(1.0)" class="flex-1 py-1.5 border rounded bg-white text-xs text-slate-600">不扣重 (1.0)</button>
-          <button type="button" onclick="setPureRatio(0.95)" class="flex-1 py-1.5 border rounded bg-white text-xs text-slate-600">95折 (0.95)</button>
-          <button type="button" onclick="setPureRatio(0.90)" class="flex-1 py-1.5 border rounded bg-white text-xs text-slate-600">90折 (0.90)</button>
-          <button type="button" onclick="setPureRatio(0.85)" class="flex-1 py-1.5 border rounded bg-white text-xs text-slate-600">85折 (0.85)</button>
+          <button type="button" onclick="setPureRatio(1.0)" class="flex-1 py-2 border rounded bg-white text-xs sm:text-sm text-slate-600">不扣重 (1.0)</button>
+          <button type="button" onclick="setPureRatio(0.95)" class="flex-1 py-2 border rounded bg-white text-xs sm:text-sm text-slate-600">95折 (0.95)</button>
+          <button type="button" onclick="setPureRatio(0.90)" class="flex-1 py-2 border rounded bg-white text-xs sm:text-sm text-slate-600">90折 (0.90)</button>
+          <button type="button" onclick="setPureRatio(0.85)" class="flex-1 py-2 border rounded bg-white text-xs sm:text-sm text-slate-600">85折 (0.85)</button>
         </div>
         <div>
-          <label class="block text-xs text-slate-500 mb-1">自訂折算比例</label>
-          <input type="number" step="0.01" id="pureRatio" value="1.0" oninput="calculateTotal()" class="w-full p-2 border rounded-lg text-base bg-white">
+          <label class="block text-xs sm:text-sm text-slate-500 mb-1">自訂折算比例</label>
+          <input type="number" step="0.01" id="pureRatio" value="1.0" oninput="calculateTotal()" class="w-full p-3 border rounded-lg text-base bg-white">
         </div>
       </div>
 
       <!-- 工錢 -->
       <div>
-        <label class="block text-sm font-medium text-slate-700 mb-1">新金工錢 (NT$)</label>
+        <label class="block text-sm sm:text-base font-medium text-slate-700 mb-1">新金工錢 (NT$)</label>
         <input type="number" id="laborFee" placeholder="請輸入工錢 (無則填0)" oninput="calculateTotal()" value="0" class="w-full p-3 border rounded-xl text-lg">
       </div>
 
       <!-- 總金額試算 -->
-      <div class="p-4 bg-amber-50 rounded-xl border border-amber-200">
-        <div class="text-sm text-amber-800 font-bold" id="calcDesc">試算總金額：</div>
-        <div id="totalPriceDisplay" class="text-3xl font-extrabold text-amber-600">NT$ 0</div>
+      <div class="p-4 sm:p-5 bg-amber-50 rounded-xl border border-amber-200">
+        <div class="text-sm sm:text-base text-amber-800 font-bold" id="calcDesc">試算總金額：</div>
+        <div id="totalPriceDisplay" class="text-3xl sm:text-4xl font-extrabold text-amber-600 mt-1">NT$ 0</div>
       </div>
 
       <!-- 備註 -->
       <div>
-        <label class="block text-sm font-medium text-slate-700 mb-1">備註 / 客戶資料</label>
+        <label class="block text-sm sm:text-base font-medium text-slate-700 mb-1">備註 / 客戶資料</label>
         <input type="text" id="note" placeholder="可選填" class="w-full p-3 border rounded-xl text-lg">
       </div>
 
       <!-- 提交與清除按鈕 -->
-      <div class="grid grid-cols-3 gap-2 pt-2">
-        <button type="button" onclick="clearForm()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-3 rounded-xl text-base transition">
+      <div class="grid grid-cols-3 gap-3 pt-2">
+        <button type="button" onclick="clearForm()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-3.5 rounded-xl text-lg transition">
           🧹 清除
         </button>
-        <button type="button" onclick="submitData()" id="submitBtn" class="col-span-2 bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 rounded-xl text-xl shadow-md transition">
+        <button type="button" onclick="submitData()" id="submitBtn" class="col-span-2 bg-amber-500 hover:bg-amber-600 text-white font-bold py-3.5 rounded-xl text-xl shadow-md transition">
           送出記帳
         </button>
       </div>
@@ -189,13 +191,13 @@
       const externalRatioBox = document.getElementById('externalRatioBox');
 
       if (type === 'local') {
-        btnLocal.className = "py-2 border rounded-lg bg-amber-500 text-white text-xs font-bold shadow-sm";
-        btnExternal.className = "py-2 border rounded-lg bg-white text-xs font-bold border-amber-300 text-amber-700 shadow-sm";
+        btnLocal.className = "py-2.5 border rounded-lg bg-amber-500 text-white text-xs sm:text-sm font-bold shadow-sm";
+        btnExternal.className = "py-2.5 border rounded-lg bg-white text-xs sm:text-sm font-bold border-amber-300 text-amber-700 shadow-sm";
         externalRatioBox.classList.add('hidden');
         document.getElementById('tradeInRatio').value = "1.0";
       } else {
-        btnExternal.className = "py-2 border rounded-lg bg-amber-500 text-white text-xs font-bold shadow-sm";
-        btnLocal.className = "py-2 border rounded-lg bg-white text-xs font-bold border-amber-300 text-amber-700 shadow-sm";
+        btnExternal.className = "py-2.5 border rounded-lg bg-amber-500 text-white text-xs sm:text-sm font-bold shadow-sm";
+        btnLocal.className = "py-2.5 border rounded-lg bg-white text-xs sm:text-sm font-bold border-amber-300 text-amber-700 shadow-sm";
         externalRatioBox.classList.remove('hidden');
         document.getElementById('tradeInRatio').value = "0.95";
       }
@@ -212,7 +214,6 @@
       calculateTotal();
     }
 
-    // 🧹 清除按鈕功能
     function clearForm() {
       if (confirm('確定要清除目前輸入的資料嗎？')) {
         document.getElementById('goldForm').reset();
