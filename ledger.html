@@ -46,8 +46,8 @@
   </div>
 
   <script>
-    const LIFF_ID = "2012013654-D2jb0NgH"; // 請對應你的 LIFF ID
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbw_LnJdtJ2kiH19AaNSnxQx3IxMKxgkR4VLx6I7VUqwfdXN67wNiiStykPlbnUSPAYK/exec"; // 請確認為你的 GAS 網址
+    const LIFF_ID = "2012013654-D2jb0NgH"; // LIFF ID
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbw_LnJdtJ2kiH19AaNSnxQx3IxMKxgkR4VLx6I7VUqwfdXN67wNiiStykPlbnUSPAYK/exec"; // GAS 網址
 
     let allData = [];
     let currentTab = 'today';
@@ -135,18 +135,13 @@
       // 計算統計數據
       let totalSellAmount = 0;
       let totalBuyAmount = 0;
-      let totalSellWeight = 0;
-      let totalBuyWeight = 0;
 
       filteredData.forEach(item => {
         const price = parseFloat(item.price) || 0;
-        const weight = parseFloat(item.weight) || 0;
-        if (item.type.includes('賣出')) {
+        if (item.type && item.type.includes('賣出')) {
           totalSellAmount += price;
-          totalSellWeight += weight;
         } else {
           totalBuyAmount += price;
-          totalBuyWeight += weight;
         }
       });
 
@@ -175,8 +170,12 @@
       filteredData.forEach(item => {
         const dateObj = new Date(item.timestamp);
         const timeStr = isNaN(dateObj) ? item.timestamp : `${dateObj.getFullYear()}/${dateObj.getMonth()+1}/${dateObj.getDate()} ${String(dateObj.getHours()).padStart(2,'0')}:${String(dateObj.getMinutes()).padStart(2,'0')}`;
-        const isSell = item.type.includes('賣出');
+        const isSell = item.type && item.type.includes('賣出');
         const badgeColor = isSell ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800';
+
+        // 支援新舊欄位的牌價相容讀取
+        const sellPriceText = item.sellRate ? `$${item.sellRate}` : (item.rate ? `$${item.rate}` : '-');
+        const buyPriceText = item.buyRate ? `$${item.buyRate}` : '-';
 
         html += `
           <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 space-y-2">
@@ -184,15 +183,17 @@
               <span class="px-2.5 py-1 rounded-md text-xs font-bold ${badgeColor}">${item.type}</span>
               <span class="text-xs text-slate-400">${timeStr}</span>
             </div>
-            <div class="flex justify-between items-end">
-              <div>
+            
+            <div class="flex justify-between items-start">
+              <div class="space-y-0.5">
                 <div class="font-bold text-slate-800 text-lg">${item.category} <span class="text-sm font-normal text-slate-600">(${item.weight} 錢)</span></div>
-                <div class="text-xs text-slate-500">牌價: $${item.rate} | 工錢: $${item.laborFee}</div>
+                <div class="text-xs text-slate-500">賣價: ${sellPriceText} | 買價: ${buyPriceText} | 工錢: $${item.laborFee || 0}</div>
+                ${item.ratioDesc && item.ratioDesc !== '無' && item.ratioDesc !== '-' ? `<div class="text-xs text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 inline-block mt-1">明細: ${item.ratioDesc}</div>` : ''}
                 ${item.note ? `<div class="text-xs text-slate-400 mt-1">備註: ${item.note}</div>` : ''}
               </div>
-              <div class="text-right">
+              <div class="text-right pl-2">
                 <div class="text-xs text-slate-400">總金額</div>
-                <div class="text-xl font-extrabold ${isSell ? 'text-amber-600' : 'text-blue-600'}">NT$ ${Math.round(item.price).toLocaleString()}</div>
+                <div class="text-xl font-extrabold ${isSell ? 'text-amber-600' : 'text-blue-600'}">NT$ ${Math.round(item.price || 0).toLocaleString()}</div>
               </div>
             </div>
           </div>
