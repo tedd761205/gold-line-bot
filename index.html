@@ -36,14 +36,14 @@
         </select>
       </div>
 
-      <!-- 今日牌價 -->
+      <!-- 今日牌價 (賣出與買入) -->
       <div class="grid grid-cols-2 gap-3">
         <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">當日賣出牌價 (NT$)</label>
+          <label class="block text-xs font-bold text-slate-700 mb-1">當日牌價(賣出) (NT$)</label>
           <input type="number" id="rate" placeholder="賣出價" oninput="calculateTotal()" required class="w-full p-3 border rounded-xl text-lg">
         </div>
-        <div id="buyRateBox">
-          <label class="block text-xs font-bold text-slate-700 mb-1">當日買入牌價 (NT$)</label>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">當日牌價(買入) (NT$)</label>
           <input type="number" id="buyRate" placeholder="買入/回收價" oninput="calculateTotal()" class="w-full p-3 border rounded-xl text-lg">
         </div>
       </div>
@@ -138,7 +138,7 @@
     const LIFF_ID = "2012013654-D2jb0NgH";
     const GAS_URL = "https://script.google.com/macros/s/AKfycbw_LnJdtJ2kiH19AaNSnxQx3IxMKxgkR4VLx6I7VUqwfdXN67wNiiStykPlbnUSPAYK/exec";
 
-    let currentShopType = 'local'; // local: 本店, external: 外店
+    let currentShopType = 'local';
 
     window.onload = function() {
       liff.init({ liffId: LIFF_ID }).catch(err => console.error(err));
@@ -222,31 +222,25 @@
         if (hasTradeIn) {
           const rawOldWeight = parseFloat(document.getElementById('oldWeight').value) || 0;
           const ratio = currentShopType === 'local' ? 1.0 : (parseFloat(document.getElementById('tradeInRatio').value) || 0.95);
-          const finalOldWeight = rawOldWeight * ratio; // 舊金扣重後淨重
+          const finalOldWeight = rawOldWeight * ratio;
 
           if (currentShopType === 'local') {
-            // 🏛️ 本店舊金 (1.0 不扣重)
             if (finalOldWeight <= newWeight) {
-              // 1-A: 舊金 ≤ 新金 -> 補重量差價(賣出價) + 工錢
               const diffWeight = newWeight - finalOldWeight;
               total = (diffWeight * sellRate) + laborFee;
               document.getElementById('calcDesc').innerText = `【本店舊金 ≤ 新金】補差額(${diffWeight.toFixed(2)}錢×賣價) + 工錢：`;
             } else {
-              // 1-B: 舊金 > 新金 -> 多餘舊金按買入價回收折抵工錢/退款
               const excessWeight = finalOldWeight - newWeight;
               total = laborFee - (excessWeight * buyRate);
               document.getElementById('calcDesc').innerText = `【本店舊金 > 新金】工錢 - 多餘舊金回收(${excessWeight.toFixed(2)}錢×買價)：`;
             }
           } else {
-            // 🔄 外店舊金 (需扣重)
             if (finalOldWeight <= newWeight) {
-              // 2-A (已更新): 舊金淨重 ≤ 新金 -> (新金重量×賣出牌價 + 工錢) - (舊金淨重×賣出牌價)
               const newTotal = (newWeight * sellRate) + laborFee;
               const oldDeduct = finalOldWeight * sellRate;
               total = newTotal - oldDeduct;
               document.getElementById('calcDesc').innerText = `【外店舊金 ≤ 新金】(新金+工錢) - 舊金折抵(${finalOldWeight.toFixed(2)}錢×賣價)：`;
             } else {
-              // 2-B: 舊金淨重 > 新金 -> 多餘舊金淨重按買入價回收折抵工錢/退款
               const excessWeight = finalOldWeight - newWeight;
               total = laborFee - (excessWeight * buyRate);
               document.getElementById('calcDesc').innerText = `【外店舊金 > 新金】工錢 - 多餘舊金淨重回收(${excessWeight.toFixed(2)}錢×買價)：`;
@@ -257,7 +251,6 @@
           document.getElementById('calcDesc').innerText = `試算總金額 (新金 ${newWeight} 錢 × 賣價 + 工錢)：`;
         }
       } else {
-        // 單純買入回收模式
         const ratio = parseFloat(document.getElementById('pureRatio').value) || 1.0;
         const finalWeight = newWeight * ratio;
         const activeRate = buyRate || sellRate;
@@ -274,8 +267,8 @@
       const rawWeight = document.getElementById('weight').value;
       const rate = document.getElementById('rate').value;
       
-      if (!rawWeight || !rate) {
-        alert('請填寫重量與單價！');
+      if (!rawWeight) {
+        alert('請填寫重量！');
         return;
       }
 
@@ -285,7 +278,7 @@
       const type = document.getElementById('type').value;
       const category = document.getElementById('category').value;
       const weightNum = parseFloat(rawWeight);
-      const rateNum = parseFloat(rate);
+      const rateNum = parseFloat(rate || 0);
       const buyRateNum = parseFloat(document.getElementById('buyRate').value || 0);
       const laborNum = parseFloat(document.getElementById('laborFee').value || 0);
 
