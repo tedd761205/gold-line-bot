@@ -127,10 +127,15 @@
         <input type="text" id="note" placeholder="可選填" class="w-full p-3 border rounded-xl text-lg">
       </div>
 
-      <!-- 提交按鈕 -->
-      <button type="button" onclick="submitData()" id="submitBtn" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 rounded-xl text-xl shadow-md transition">
-        送出記帳
-      </button>
+      <!-- 提交與清除按鈕 -->
+      <div class="grid grid-cols-3 gap-2 pt-2">
+        <button type="button" onclick="clearForm()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-3 rounded-xl text-base transition">
+          🧹 清除
+        </button>
+        <button type="button" onclick="submitData()" id="submitBtn" class="col-span-2 bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 rounded-xl text-xl shadow-md transition">
+          送出記帳
+        </button>
+      </div>
     </form>
   </div>
 
@@ -205,6 +210,16 @@
     function setPureRatio(val) {
       document.getElementById('pureRatio').value = val;
       calculateTotal();
+    }
+
+    // 🧹 清除按鈕功能
+    function clearForm() {
+      if (confirm('確定要清除目前輸入的資料嗎？')) {
+        document.getElementById('goldForm').reset();
+        document.getElementById('laborFee').value = "0";
+        toggleFormMode();
+        calculateTotal();
+      }
     }
 
     function calculateTotal() {
