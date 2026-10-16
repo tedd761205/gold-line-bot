@@ -145,10 +145,14 @@
         }
       });
 
+      // 💡 計算現金結餘 (賣出總額 - 買入總額)
+      const cashBalance = totalSellAmount - totalBuyAmount;
+      const balanceColor = cashBalance >= 0 ? 'text-emerald-600' : 'text-rose-600';
+
       // 渲染統計摘要
       summaryCard.innerHTML = `
         <div class="text-xs text-amber-800 font-bold mb-1">${currentTab === 'today' ? '📅 今日交易摘要' : '📊 篩選區間摘要'} (${filteredData.length} 筆)</div>
-        <div class="grid grid-cols-2 gap-2 text-sm">
+        <div class="grid grid-cols-2 gap-2 text-sm mb-2">
           <div class="bg-white p-2.5 rounded-lg border border-amber-100">
             <div class="text-slate-500 text-xs">零售賣出總額</div>
             <div class="font-extrabold text-amber-600">NT$ ${Math.round(totalSellAmount).toLocaleString()}</div>
@@ -157,6 +161,11 @@
             <div class="text-slate-500 text-xs">回收買入總額</div>
             <div class="font-extrabold text-blue-600">NT$ ${Math.round(totalBuyAmount).toLocaleString()}</div>
           </div>
+        </div>
+        <!-- 💡 新增的結餘區塊 -->
+        <div class="bg-white p-3 rounded-lg border border-amber-100 flex justify-between items-center">
+          <div class="text-slate-700 text-xs font-bold">💵 現金收支結餘 (賣出 - 買入)</div>
+          <div class="font-extrabold text-base ${balanceColor}">NT$ ${Math.round(cashBalance).toLocaleString()}</div>
         </div>
       `;
 
