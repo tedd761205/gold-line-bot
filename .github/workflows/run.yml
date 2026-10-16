@@ -2,7 +2,8 @@ name: Gold and Weather Bot
 
 on:
   schedule:
-    - cron: '30 22 * * *'  # 每天早上 6:30 執行 (UTC+8)
+    - cron: '30 2 * * *'  
+    # 每天早上 10:30 執行 (UTC+8)
   workflow_dispatch:        # 允許手動觸發
 
 jobs:
