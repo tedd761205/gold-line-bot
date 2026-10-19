@@ -17,7 +17,7 @@
       <button onclick="switchTab('all')" id="tabAll" class="flex-1 py-2.5 rounded-lg font-bold text-sm text-slate-600 transition">全部歷史</button>
     </div>
 
-    <!-- 日期篩選區塊 (僅在「全部歷史」時顯示) -->
+    <!-- 日期篩選區塊 -->
     <div id="filterSection" class="bg-white p-3 rounded-xl shadow-sm border border-slate-200 space-y-2 hidden">
       <div class="text-xs font-bold text-slate-600">📅 篩選日期區間</div>
       <div class="flex items-center gap-2">
@@ -46,8 +46,8 @@
   </div>
 
   <script>
-    const LIFF_ID = "2012013654-D2jb0NgH"; // LIFF ID
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbw_LnJdtJ2kiH19AaNSnxQx3IxMKxgkR4VLx6I7VUqwfdXN67wNiiStykPlbnUSPAYK/exec"; // GAS 網址
+    const LIFF_ID = "2012013654-D2jb0NgH";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbw_LnJdtJ2kiH19AaNSnxQx3IxMKxgkR4VLx6I7VUqwfdXN67wNiiStykPlbnUSPAYK/exec";
 
     let allData = [];
     let currentTab = 'today';
@@ -115,7 +115,6 @@
           return new Date(item.timestamp).toDateString() === todayStr;
         });
       } else {
-        // 全部歷史模式下，檢查是否有設定日期篩選
         const startVal = document.getElementById('startDate').value;
         const endVal = document.getElementById('endDate').value;
 
@@ -132,7 +131,6 @@
         }
       }
 
-      // 計算統計數據
       let totalSellAmount = 0;
       let totalBuyAmount = 0;
 
@@ -145,11 +143,9 @@
         }
       });
 
-      // 現金結餘 (賣出總額 - 買入總額)
       const cashBalance = totalSellAmount - totalBuyAmount;
       const balanceColor = cashBalance >= 0 ? 'text-emerald-600' : 'text-rose-600';
 
-      // 渲染統計摘要
       summaryCard.innerHTML = `
         <div class="text-xs text-amber-800 font-bold mb-1">${currentTab === 'today' ? '📅 今日交易摘要' : '📊 篩選區間摘要'} (${filteredData.length} 筆)</div>
         <div class="grid grid-cols-2 gap-2 text-sm mb-2">
@@ -168,7 +164,6 @@
         </div>
       `;
 
-      // 渲染列表
       if (filteredData.length === 0) {
         recordList.innerHTML = `<div class="text-center py-8 text-slate-400 bg-white rounded-xl border border-slate-200">目前沒有符合條件的交易紀錄</div>`;
         return;
@@ -181,11 +176,9 @@
         const isSell = item.type && item.type.includes('賣出');
         const badgeColor = isSell ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800';
 
-        // 支援新舊欄位的牌價與訊息讀取
         const sellPriceText = item.sellRate ? `$${item.sellRate}` : (item.rate ? `$${item.rate}` : '-');
         const buyPriceText = item.buyRate ? `$${item.buyRate}` : '-';
 
-        // 💡 讀取新欄位：交易方式與經手人員
         const paymentMethodText = item.paymentMethod || item.note || '-';
         const personText = item.personName || '未指定';
 
