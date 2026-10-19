@@ -145,7 +145,7 @@
         }
       });
 
-      // 💡 計算現金結餘 (賣出總額 - 買入總額)
+      // 現金結餘 (賣出總額 - 買入總額)
       const cashBalance = totalSellAmount - totalBuyAmount;
       const balanceColor = cashBalance >= 0 ? 'text-emerald-600' : 'text-rose-600';
 
@@ -162,7 +162,6 @@
             <div class="font-extrabold text-blue-600">NT$ ${Math.round(totalBuyAmount).toLocaleString()}</div>
           </div>
         </div>
-        <!-- 💡 新增的結餘區塊 -->
         <div class="bg-white p-3 rounded-lg border border-amber-100 flex justify-between items-center">
           <div class="text-slate-700 text-xs font-bold">💵 現金收支結餘 (賣出 - 買入)</div>
           <div class="font-extrabold text-base ${balanceColor}">NT$ ${Math.round(cashBalance).toLocaleString()}</div>
@@ -182,14 +181,21 @@
         const isSell = item.type && item.type.includes('賣出');
         const badgeColor = isSell ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800';
 
-        // 支援新舊欄位的牌價相容讀取
+        // 支援新舊欄位的牌價與訊息讀取
         const sellPriceText = item.sellRate ? `$${item.sellRate}` : (item.rate ? `$${item.rate}` : '-');
         const buyPriceText = item.buyRate ? `$${item.buyRate}` : '-';
+
+        // 💡 讀取新欄位：交易方式與經手人員
+        const paymentMethodText = item.paymentMethod || item.note || '-';
+        const personText = item.personName || '未指定';
 
         html += `
           <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 space-y-2">
             <div class="flex justify-between items-center">
-              <span class="px-2.5 py-1 rounded-md text-xs font-bold ${badgeColor}">${item.type}</span>
+              <div class="flex items-center gap-2">
+                <span class="px-2.5 py-1 rounded-md text-xs font-bold ${badgeColor}">${item.type}</span>
+                <span class="text-xs font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded">👤 ${personText}</span>
+              </div>
               <span class="text-xs text-slate-400">${timeStr}</span>
             </div>
             
@@ -197,8 +203,8 @@
               <div class="space-y-0.5">
                 <div class="font-bold text-slate-800 text-lg">${item.category} <span class="text-sm font-normal text-slate-600">(${item.weight} 錢)</span></div>
                 <div class="text-xs text-slate-500">賣價: ${sellPriceText} | 買價: ${buyPriceText} | 工錢: $${item.laborFee || 0}</div>
+                <div class="text-xs text-slate-600 font-medium pt-0.5">💳 交易方式: <span class="text-slate-800 font-bold">${paymentMethodText}</span></div>
                 ${item.ratioDesc && item.ratioDesc !== '無' && item.ratioDesc !== '-' ? `<div class="text-xs text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 inline-block mt-1">明細: ${item.ratioDesc}</div>` : ''}
-                ${item.note ? `<div class="text-xs text-slate-400 mt-1">備註: ${item.note}</div>` : ''}
               </div>
               <div class="text-right pl-2">
                 <div class="text-xs text-slate-400">總金額</div>
