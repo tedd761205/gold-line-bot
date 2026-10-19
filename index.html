@@ -123,7 +123,7 @@
         <div id="totalPriceDisplay" class="text-3xl sm:text-4xl font-extrabold text-amber-600 mt-1">NT$ 0</div>
       </div>
 
-      <!-- 💡 交易方式 (必填) -->
+      <!-- 💡 交易方式 (選轉帳或其他皆會跳出輸入框) -->
       <div>
         <label class="block text-sm sm:text-base font-medium text-slate-700 mb-1">交易方式 <span class="text-red-500">*</span></label>
         <select id="paymentMethod" onchange="toggleAccountInput()" required class="w-full p-3 border rounded-xl bg-slate-50 text-lg">
@@ -134,9 +134,9 @@
           <option value="刷卡">刷卡</option>
           <option value="其他">其他</option>
         </select>
-        <!-- 選轉帳時自動顯示輸入框 -->
+        <!-- 選轉帳或其他時自動顯示輸入框 -->
         <div id="accountInputBox" class="hidden mt-2">
-          <input type="text" id="transferAccount" placeholder="請輸入轉帳帳號末五碼或備註" class="w-full p-3 border rounded-xl text-base bg-amber-50/50">
+          <input type="text" id="transferAccount" placeholder="請輸入轉帳帳號 / 其它交易說明" class="w-full p-3 border rounded-xl text-base bg-amber-50/50">
         </div>
       </div>
 
@@ -164,18 +164,17 @@
     const LIFF_ID = "2012013654-D2jb0NgH";
     const GAS_URL = "https://script.google.com/macros/s/AKfycbw_LnJdtJ2kiH19AaNSnxQx3IxMKxgkR4VLx6I7VUqwfdXN67wNiiStykPlbnUSPAYK/exec";
 
-    // 💡 在這裡集中管理經手人員名單，需要修改或增減名字只需改這裡
-    const STAFF_LIST = ["王榮川", "黃美惠", "王家郁", "王家駿", "蔡佳晏"];
+    // 💡 集中管理經手人員名單
+    const STAFF_LIST = ["王榮川", "王家郁", "人員 C", "人員 D", "人員 E"];
 
     let currentShopType = 'local';
 
     window.onload = function() {
       liff.init({ liffId: LIFF_ID }).catch(err => console.error(err));
-      initPersonSelect(); // 初始化動態渲染人員選單
+      initPersonSelect();
       toggleFormMode();
     };
 
-    // 💡 動態生成人員下拉選單選項
     function initPersonSelect() {
       const select = document.getElementById('personName');
       STAFF_LIST.forEach(name => {
@@ -186,12 +185,19 @@
       });
     }
 
-    // 切換是否顯示轉帳帳號輸入框
+    // 💡 選「轉帳」或「其他」時皆顯示動態欄位
     function toggleAccountInput() {
       const method = document.getElementById('paymentMethod').value;
       const inputBox = document.getElementById('accountInputBox');
-      if (method === '轉帳') {
+      const accountInput = document.getElementById('transferAccount');
+
+      if (method === '轉帳' || method === '其他') {
         inputBox.classList.remove('hidden');
+        if (method === '轉帳') {
+          accountInput.placeholder = "請輸入轉帳帳號末五碼或備註";
+        } else {
+          accountInput.placeholder = "請輸入其他交易方式說明 (例：禮券、支票)";
+        }
       } else {
         inputBox.classList.add('hidden');
       }
@@ -354,6 +360,11 @@
         return;
       }
 
+      if (paymentMethod === '其他' && !transferAccount) {
+        alert('選擇其他時，請填寫交易方式說明！');
+        return;
+      }
+
       if (!personName) {
         alert('請選擇「經手人員 / 顧客」！');
         return;
@@ -414,9 +425,9 @@
         totalPrice = Math.round((finalWeight * activeRate) - laborNum);
       }
 
-      // 💡 組合交易方式與轉帳細節
+      // 💡 組合交易方式與轉帳/其他細節
       let paymentText = paymentMethod;
-      if (paymentMethod === '轉帳' && transferAccount !== "") {
+      if ((paymentMethod === '轉帳' || paymentMethod === '其他') && transferAccount !== "") {
         paymentText += ` (${transferAccount})`;
       }
 
