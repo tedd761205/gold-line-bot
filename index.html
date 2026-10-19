@@ -123,7 +123,7 @@
         <div id="totalPriceDisplay" class="text-3xl sm:text-4xl font-extrabold text-amber-600 mt-1">NT$ 0</div>
       </div>
 
-      <!-- 💡 修改處 1：交易方式 (設為必填 required) -->
+      <!-- 💡 交易方式 (必填) -->
       <div>
         <label class="block text-sm sm:text-base font-medium text-slate-700 mb-1">交易方式 <span class="text-red-500">*</span></label>
         <select id="paymentMethod" onchange="toggleAccountInput()" required class="w-full p-3 border rounded-xl bg-slate-50 text-lg">
@@ -140,16 +140,11 @@
         </div>
       </div>
 
-      <!-- 💡 修改處 2：經手人員 / 顧客 (設為必填 required) -->
+      <!-- 💡 經手人員 / 顧客 (動態渲染，必填) -->
       <div>
         <label class="block text-sm sm:text-base font-medium text-slate-700 mb-1">經手人員 / 顧客 <span class="text-red-500">*</span></label>
         <select id="personName" required class="w-full p-3 border rounded-xl bg-slate-50 text-lg">
           <option value="" disabled selected>請選擇人員</option>
-          <option value="人員 A">人員 A</option>
-          <option value="人員 B">人員 B</option>
-          <option value="人員 C">人員 C</option>
-          <option value="人員 D">人員 D</option>
-          <option value="人員 E">人員 E</option>
         </select>
       </div>
 
@@ -169,12 +164,27 @@
     const LIFF_ID = "2012013654-D2jb0NgH";
     const GAS_URL = "https://script.google.com/macros/s/AKfycbw_LnJdtJ2kiH19AaNSnxQx3IxMKxgkR4VLx6I7VUqwfdXN67wNiiStykPlbnUSPAYK/exec";
 
+    // 💡 在這裡集中管理經手人員名單，需要修改或增減名字只需改這裡
+    const STAFF_LIST = ["王榮川", "黃美惠", "王家郁", "王家駿", "蔡佳晏"];
+
     let currentShopType = 'local';
 
     window.onload = function() {
       liff.init({ liffId: LIFF_ID }).catch(err => console.error(err));
+      initPersonSelect(); // 初始化動態渲染人員選單
       toggleFormMode();
     };
+
+    // 💡 動態生成人員下拉選單選項
+    function initPersonSelect() {
+      const select = document.getElementById('personName');
+      STAFF_LIST.forEach(name => {
+        const opt = document.createElement('option');
+        opt.value = name;
+        opt.innerText = name;
+        select.appendChild(opt);
+      });
+    }
 
     // 切換是否顯示轉帳帳號輸入框
     function toggleAccountInput() {
