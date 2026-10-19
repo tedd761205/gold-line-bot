@@ -185,6 +185,32 @@
       });
     }
 
+      // 💡 從 Google 試算表動態取得人員名單並生成選單
+    function loadStaffListFromSheet() {
+      const select = document.getElementById('personName');
+      
+      fetch(GAS_URL)
+        .then(res => res.json())
+        .then(res => {
+          if (res.status === "success" && res.staff && res.staff.length > 0) {
+            // 清空舊選項保留預設提示
+            select.innerHTML = '<option value="" disabled selected>請選擇人員</option>';
+            // 動態加入從 Excel 抓到的名字
+            res.staff.forEach(name => {
+              const opt = document.createElement('option');
+              opt.value = name;
+              opt.innerText = name;
+              select.appendChild(opt);
+            });
+          }
+        })
+        .catch(err => {
+          console.error("載入人員名單失敗", err);
+          // 若連線失敗時的備用名單
+          select.innerHTML += '<option value="王榮川">王榮川</option><option value="王家郁">王家郁</option>';
+        });
+    }
+    
     // 💡 選「轉帳」或「其他」時皆顯示動態欄位
     function toggleAccountInput() {
       const method = document.getElementById('paymentMethod').value;
